@@ -1,0 +1,120 @@
+
+html {
+  overflow-y: scroll;
+}
+
+div .apphlp {
+	cursor: default;
+	background: none repeat scroll 0 0 #ff575e;
+	border-radius: 25px;
+	margin: 10px auto;
+	max-width: 700px;
+	padding: 5px;
+	vertical-align: top;
+}
+
+.apphlp table,tr,td {
+	vertical-align: top;
+}
+
+.guihlpdiv {
+	max-width: 680px;
+	padding: 20px;
+}
+
+.guihlp span,h1,h2,h3,p {
+	margin: 2px 0;
+	font-family: "Droid Sans", sans-serif;
+}
+
+.icon128 {
+    height: 128px;
+    width: 128px;
+    border: none;
+}
+
+/* PDF Tooltip text */
+.pdfHint .pdfHintText {
+	width: 220px;
+	margin-top: 5px;
+	margin-left: -92px;
+	background-color: black;
+	color: #fff;
+	text-align: center;
+	padding: 5px 0;
+	border-radius: 6px;
+	/* Position the pdfHint text - see examples below! */
+	position: absolute;
+	z-index: 1;
+	cursor: default;
+}
+
+.pdfHint .pdfHintText::after {
+    content: " ";
+    position: absolute;
+    bottom: 100%;  /* At the top of the pdfHint */
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent black transparent;
+}
+
+/* Div covering the entire page until it is loaded */
+#cover {
+	position: fixed; 
+	height: 100%; 
+	width: 100%; 
+	top:0; 
+	left: 0; 
+	background-color: rgba(255, 255, 255, 0.65); 
+	z-index:99999;
+	font-family: "Droid Sans", sans-serif;
+	font-weight: bold;
+	font-size: 60px;
+	text-align: center;
+	padding-top: 400px;
+	color: #666;
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+}
+
+#mailchimp {
+    display: inline-block;
+    cursor: pointer;
+    color: white;
+    background-color: #00acee;
+    border: none;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 16px;
+    padding: 16px;
+  	width: 260px;
+  	transition: all 0.5s;
+  	margin: 5px;
+}
+
+#mailchimp span {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+
+#mailchimp span:after {
+  content: '\00bb';
+  position: absolute;
+  opacity: 0;
+  top: 0;
+  right: -20px;
+  transition: 0.5s;
+}
+
+#mailchimp:hover span {
+  padding-right: 25px;
+}
+
+#mailchimp:hover span:after {
+  opacity: 1;
+  right: 0;
+}

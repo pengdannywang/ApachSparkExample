@@ -1,0 +1,111 @@
+#title Complete Checkout Sequence
+
+participant "API Client\n\"You\"" as C
+participant "LIVN GDS API\n\"Us\"" as S
+participant "Supplier APIs\n\"Them\"" as O
+
+C->S: postCart()
+S->S: Local validation of posted data
+S->S: Completion with data from Livn's inventory cache
+S->S: Persist cart (assigns cart.id)
+S->>O: Live availability and rates checks
+
+
+alt postCart() request header "Synchronous: true" (default)
+	
+	note right of O: Process may potentially take longer, but by default is handled synchronously.\nThis can be explicitly overridden by sending the HTTP header "Synchronous: false", \ncausing the upstream exchange to be the processed asynchronously.
+	
+	O-->>S:
+	S->S: Update cart\nor any problems\nencountered in live checks
+	S-->>C: cart
+	
+else postCart() request header "Synchronous: false"
+	
+	S-->>C: cart
+	
+	note left of C: At this point cart.status is IN_ASYNC_LIVE_CHECKS.\nStart polling cart after reasonable amount of time.\nRecommended 2000ms (<1000ms for open dated)\nPoll until cart.status is READY_FOR_CHECKOUT or FAILED_LIVE_CHECKS.
+	
+	loop cart.status == IN_ASYNC_LIVE_CHECKS)
+		C->S: getCart(cartId) [use parameter getFullDetails=false]
+		S-->>C: cart
+	end
+
+	O-->>S:
+	S->S: Update cart\nor any problems\nencountered in live checks
+	S-->>C: cart (in polling loop)
+
+end
+
+note left of C: Regardless of synchronous or asynchronous processing, at this stage cart.status is \nREADY_FOR_CHECKOUT or FAILED_LIVE_CHECKS
+
+alt cart.status == FAILED_LIVE_CHECKS
+	note left of C: Check cart.problems for details on why live checks failed
+else cart.status == READY_FOR_CHECKOUT
+	
+	C->S: checkoutCart()
+	S->>O: Make and confirm reservation(s)
+	
+	alt checkoutCart() request header "Synchronous: true" (default)
+	
+		note right of O: Process may again potentially take longer\nAgain handled asynchronously, with polling (unless overridden).
+		O-->>S:
+		S->S: Update cart \n and persist reservations\nor any checkout problems
+		S-->>C: cart
+	
+	else checkoutCart() request header "Synchronous: false"
+	
+		note left of C: At this point cart.status is now IN_ASYNC_CHECKOUT
+		S-->>C: cart
+		
+		note left of C: Wait again until polling cart\nPoll cart until checkout completes/fails, i.e. cart.status != IN_ASYNC_CHECKOUT
+			
+		loop cart.status == IN_ASYNC_CHECKOUT
+			C->S: getCart(cartId) [use parameter getFullDetails=false]
+			S-->>C: cart
+		end
+	
+		O-->>S:
+		S->S: Update cart \n and persist reservations\nor any checkout problems
+		S-->>C: cart (in polling loop)
+	
+	end
+	
+	opt cart.status == EXPIRED
+		note over C: Waited too long to proceed to checkout and call checkoutCart()!\nYou need to POST a fresh cart.
+	end
+	
+	opt Check if cart needs payment authorisation or credit card payment
+	
+		alt cart.status == PENDING_PAYMENT_AUTHORISATION
+		
+			C->S: authorisePayment()
+			S->S: Update cart status,\npersist payment authorisation\nand set cart.dateSold
+			S-->>C: cart
+		
+		else cart.status == PENDING_CREDIT_CARD_PAYMENT
+		
+			note left of C: Required payment amount:\ncart.retailTotals.netAmount
+			C->S: makeCreditCardPayment()
+			
+			S->*Stripe API: Relay credit card details\nwithout local persistence
+			Stripe API-->S: Stripe charge.id
+			destroy Stripe API
+			
+			S->S: Update cart status,\npersist Stripe charge.id\nand set cart.dateSold
+			S-->>C: cart
+			
+		end
+	
+	
+		opt cart.status == TIMED_OUT_AFTER_CHECKOUT
+			note over C: Waited too long to authorise or make payment! Reservations have been rolled back\nNeed to POST a fresh cart.
+		end
+	
+	end
+	
+	note left of C: At this point cart.status is COMPLETED
+	
+	C->S: getReservationByCart(cartId)
+	S-->>C: list<reservation>
+
+end

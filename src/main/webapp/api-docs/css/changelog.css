@@ -1,0 +1,21 @@
+.changelog {
+  font-family: "Droid Sans", sans-serif;
+  line-height: 1.4em;
+}
+
+.changelog p {
+    color: #333333;
+    padding: 0 0 10px 0;
+    margin: 2px 0;
+}
+
+.changelog p.important {
+    color: #ff575e;
+}
+
+.changeDate {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #999999;
+}
+

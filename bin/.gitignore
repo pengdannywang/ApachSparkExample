@@ -1,0 +1,14 @@
+/com/
+/conf/
+/employees.json
+/full_user.avsc
+/kv1.txt
+/log4j.properties
+/org/
+/people.csv
+/people.json
+/people.txt
+/spark-defaults.conf
+/user.avsc
+/users.avro
+/users.parquet
