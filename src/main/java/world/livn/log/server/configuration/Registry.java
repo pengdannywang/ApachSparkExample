@@ -99,10 +99,10 @@ public enum Registry {
 		});
 	}
 
-	public static final String APPLICATION_NAME = "livn-geocoding";
+	public static final String APPLICATION_NAME = "livn-log";
 
-	private static final String LOGGER_NAME = "world.livn.geocoding";
-	private static final String DEV_LOGGER_NAME = "world.livn.geocoding.devLogger";
+	private static final String LOGGER_NAME = "world.livn.log";
+	private static final String DEV_LOGGER_NAME = "world.livn.log.devLogger";
 
 	private static final String TIMEZONE = "Australia/Sydney"; // Or rather UTC?
 
