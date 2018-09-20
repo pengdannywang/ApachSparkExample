@@ -97,12 +97,12 @@ public class JavaSparkSQLExample {
 		spark.stop();
 	}
 
-	private static void runBasicDataFrameExample(SparkSession spark) throws AnalysisException {
+	public static void runBasicDataFrameExample(SparkSession spark) throws AnalysisException {
 		// $example on:create_df$
 		//Dataset<Row> df = spark.read().json("src/main/resources/people.json");
 		Dataset<Row> jdbcDF = spark.read()
 				.format("jdbc")
-				.option("url", "jdbc:postgresql://10.10.0.18:5432/pw_central_sales")
+				.option("url", "jdbc:postgresql://10.10.0.18:5432/pw_satellite_sales")
 				.option("dbtable", "public.txnItem")
 				.option("user", "bookingmate")
 				.option("password", "jR7!vf8X")
