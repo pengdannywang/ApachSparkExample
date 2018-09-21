@@ -18,7 +18,6 @@ package world.livn.log.service;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,19 +67,23 @@ public class SparkAccessLogService {
 		Dataset<Row> messSet = ds.filter("level=='INFO'").filter(ds.col("message").contains("Login Name:"))
 				.select("message");
 		messSet.show(2, false);
-		Dataset<String> messSets = messSet.flatMap(new FlatMapFunction<Row, String>() {
+
+
+		Dataset<String> messSets = messSet.flatMap(new FlatMapFunction<Row,String>() {
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			public Iterator<String> call(Row row) throws Exception {
-				// TODO Auto-generated method stub
-				List<String> list = Arrays.asList(row.getString(0).split(","));
-				return list.iterator();
+
+
+				return Arrays.asList(row.getString(0).split(",")).iterator();
+
+
 			}
 
 		}, Encoders.STRING()).distinct();
 
-		messSets.show(20, false);
+		messSets.map(r->r.getString(0).split(":"));
 
 	}
 
