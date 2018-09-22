@@ -22,15 +22,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.examples.JavaLogQuery.Stats;
 // $example off:programmatic_schema$
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 // $example on:init_session$
 import org.apache.spark.sql.SparkSession;
 
+import scala.Tuple2;
 import scala.Tuple3;
 
 public class SparkAccessLogService {
@@ -63,28 +66,40 @@ public class SparkAccessLogService {
 		//
 		// // Displays the content of the DataFrame to stdout
 		// jdbcDF.show();
-		Dataset<Row> ds = spark.read().json("W:/pwang/central_logs/*.log");
+		Dataset<Row> ds = spark.read().json("/Users/pengwang/git/PySparkSample/logs/*.log");
 		Dataset<Row> messSet = ds.filter("level=='INFO'").filter(ds.col("message").contains("Login Name:"))
 				.select("message");
 		messSet.show(2, false);
 
-
-		Dataset<String> messSets = messSet.flatMap(new FlatMapFunction<Row,String>() {
+		Dataset<String> messSets = messSet.flatMap(new FlatMapFunction<Row, String>() {
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			public Iterator<String> call(Row row) throws Exception {
 
-
 				return Arrays.asList(row.getString(0).split(",")).iterator();
-
 
 			}
 
-		}, Encoders.STRING()).distinct();
+		}, Encoders.STRING());
 
-		messSets.map(r->r.getString(0).split(":"));
+		Dataset<String> dds=messSets.filter(messSets.col("value").contains(":"));
+		Dataset<Tuple2<String,String>> tps = dds.map(new MapFunction<String, Tuple2<String,String>>() {
+			private static final long serialVersionUID = 1L;
 
+			public Tuple2<String,String> call(String r) {
+				
+					String[] split = r.split(":");
+					Tuple2 tuple=Tuple2.apply(split[0],split[1]);
+	
+					
+					return tuple;
+				
+			}
+
+		},Encoders.tuple(Encoders.STRING(), Encoders.STRING()));
+		
+		tps.show();
 	}
 
 	public static final Pattern apacheLogRegex = Pattern.compile(
