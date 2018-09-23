@@ -69,20 +69,20 @@ public class SparkAccessLogService {
 		Dataset<Row> ds = spark.read().json("/Users/pengwang/git/PySparkSample/logs/*.log");
 		Dataset<Row> messSet = ds.filter("level=='INFO'").filter(ds.col("message").contains("Login Name:"))
 				.select("message");
-		messSet.show(2, false);
-
+	
+		messSet.show(2,false);
 		Dataset<String> messSets = messSet.flatMap(new FlatMapFunction<Row, String>() {
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			public Iterator<String> call(Row row) throws Exception {
-
-				return Arrays.asList(row.getString(0).split(",")).iterator();
+			
+				return Arrays.asList(row.getString(0).split(",",3)).iterator();
 
 			}
 
 		}, Encoders.STRING());
-
+		messSets.show(20,false);
 		Dataset<String> dds=messSets.filter(messSets.col("value").contains(":"));
 		Dataset<Tuple2<String,String>> tps = dds.map(new MapFunction<String, Tuple2<String,String>>() {
 			private static final long serialVersionUID = 1L;
@@ -90,16 +90,17 @@ public class SparkAccessLogService {
 			public Tuple2<String,String> call(String r) {
 				
 					String[] split = r.split(":");
-					Tuple2 tuple=Tuple2.apply(split[0],split[1]);
-	
-					
+					Tuple2 tuple=Tuple2.apply(split[0].trim(),split[1].trim());
 					return tuple;
 				
 			}
 
 		},Encoders.tuple(Encoders.STRING(), Encoders.STRING()));
 		Dataset<Row> trs=tps.toDF("keys","values");
-		trs.groupBy("values").count().show();
+		trs.groupBy("keys").count().show(20,false);
+		trs.filter(trs.col("keys").contains("Backend User")).groupBy("values").count().orderBy("count").show();
+		trs.filter(trs.col("keys").contains("Login Name")).groupBy("values").count().orderBy("count").show();
+		trs.filter("keys='Name'").groupBy("values").count().orderBy("count").show();
 	}
 
 	public static final Pattern apacheLogRegex = Pattern.compile(
