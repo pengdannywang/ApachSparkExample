@@ -98,8 +98,8 @@ public class SparkAccessLogService {
 			}
 
 		},Encoders.tuple(Encoders.STRING(), Encoders.STRING()));
-		
-		tps.show();
+		Dataset<Row> trs=tps.toDF("keys","values");
+		trs.groupBy("values").count().show();
 	}
 
 	public static final Pattern apacheLogRegex = Pattern.compile(
