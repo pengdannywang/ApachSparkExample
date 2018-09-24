@@ -22,6 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.examples.JavaLogQuery.Stats;
 // $example off:programmatic_schema$
 import org.apache.spark.sql.AnalysisException;
@@ -31,6 +32,7 @@ import org.apache.spark.sql.Row;
 // $example on:init_session$
 import org.apache.spark.sql.SparkSession;
 
+import scala.Tuple2;
 import scala.Tuple3;
 
 public class SparkAccessLogService {
@@ -66,25 +68,39 @@ public class SparkAccessLogService {
 		Dataset<Row> ds = spark.read().json("W:/pwang/central_logs/*.log");
 		Dataset<Row> messSet = ds.filter("level=='INFO'").filter(ds.col("message").contains("Login Name:"))
 				.select("message");
-		messSet.show(2, false);
 
-
-		Dataset<String> messSets = messSet.flatMap(new FlatMapFunction<Row,String>() {
+		messSet.show(2,false);
+		Dataset<String> messSets = messSet.flatMap(new FlatMapFunction<Row, String>() {
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			public Iterator<String> call(Row row) throws Exception {
 
-
-				return Arrays.asList(row.getString(0).split(",")).iterator();
-
+				return Arrays.asList(row.getString(0).split(",",3)).iterator();
 
 			}
 
-		}, Encoders.STRING()).distinct();
+		}, Encoders.STRING());
+		messSets.show(20,false);
+		Dataset<String> dds=messSets.filter(messSets.col("value").contains(":"));
+		Dataset<Tuple2<String,String>> tps = dds.map(new MapFunction<String, Tuple2<String,String>>() {
+			private static final long serialVersionUID = 1L;
 
-		messSets.map(r->r.getString(0).split(":"));
+			@Override
+			public Tuple2<String,String> call(String r) {
 
+				String[] split = r.split(":");
+				Tuple2 tuple=Tuple2.apply(split[0].trim(),split[1].trim());
+				return tuple;
+
+			}
+
+		},Encoders.tuple(Encoders.STRING(), Encoders.STRING()));
+		Dataset<Row> trs=tps.toDF("keys","values");
+		trs.groupBy("keys").count().show(20,false);
+		trs.filter(trs.col("keys").contains("Backend User")).groupBy("values").count().orderBy("count").show();
+		trs.filter(trs.col("keys").contains("Login Name")).groupBy("values").count().orderBy("count").show();
+		trs.filter("keys='Name'").groupBy("values").count().orderBy("count").show();
 	}
 
 	public static final Pattern apacheLogRegex = Pattern.compile(
