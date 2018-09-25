@@ -1,6 +1,6 @@
 package world.livn.log.server.model;
 
-import io.swagger.annotations.ApiModelProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class AccessLog {
 	/**
@@ -21,16 +21,13 @@ public class AccessLog {
 	 * "thread_name":"http-bio-443-exec-5","request_path":"\/livncentral\/intapi\/cache\/42717","server_port":443,
 	 * "user-agent":"Java\/1.8.0_171","status":200}
 	 */
-	@ApiModelProperty(value = "server name e.g.central.livngds.com", required = true)
-	String server_name;
-	@ApiModelProperty(value = "e.g.GET //livncentral//intapi//cache//42717?startDate=2018-09-06&endDate=2018-09-12  HTTP//1.1", required = true)
-	String request;
-	String remote_addr;
-	String source_host;
-	String query;
-	String local_addr;
-	String remote_host;
-	String timestamp;
-	String request_path;
+	@JsonProperty("IP")
+	private String ip;
+	@JsonProperty("Login Name")
+	private String loginName;
+	@Override
+	public String toString() {
+		return "AccessLog [ip=" + this.ip + ", loginName=" + this.loginName + "]";
+	}
 
 }

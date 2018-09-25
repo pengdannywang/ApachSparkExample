@@ -16,24 +16,29 @@
  */
 package world.livn.log.service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.MapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.examples.JavaLogQuery.Stats;
 // $example off:programmatic_schema$
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 // $example on:init_session$
 import org.apache.spark.sql.SparkSession;
 
 import scala.Tuple2;
 import scala.Tuple3;
+
 
 public class SparkAccessLogService {
 
@@ -82,27 +87,55 @@ public class SparkAccessLogService {
 
 		}, Encoders.STRING());
 		messSets.show(20,false);
-		Dataset<String> dds=messSets.filter(messSets.col("value").contains(":"));
-		Dataset<Tuple2<String,String>> tps = dds.map(new MapFunction<String, Tuple2<String,String>>() {
-			private static final long serialVersionUID = 1L;
+		//		Dataset<String> dds=messSets.filter(messSets.col("value").contains(":"));
+		//		Dataset<Tuple2<String,String>> tps = dds.map(new MapFunction<String, Tuple2<String,String>>() {
+		//			private static final long serialVersionUID = 1L;
+		//
+		//			@Override
+		//			public Tuple2<String,String> call(String r) {
+		//
+		//				String[] split = r.split(":");
+		//				Tuple2 tuple=Tuple2.apply(split[0].trim(),split[1].trim());
+		//				return tuple;
+		//
+		//			}
+		//
+		//		},Encoders.tuple(Encoders.STRING(), Encoders.STRING()));
+		JavaRDD<Row> rowRDD=messSets.javaRDD().map((Function<String,Row>) record->{
 
-			@Override
-			public Tuple2<String,String> call(String r) {
 
-				String[] split = r.split(":");
-				Tuple2 tuple=Tuple2.apply(split[0].trim(),split[1].trim());
-				return tuple;
+			List<Tuple2<String,String>> tuple=parser(record);
 
-			}
 
-		},Encoders.tuple(Encoders.STRING(), Encoders.STRING()));
-		Dataset<Row> trs=tps.toDF("keys","values");
-		trs.groupBy("keys").count().show(20,false);
-		trs.filter(trs.col("keys").contains("Backend User")).groupBy("values").count().orderBy("count").show();
-		trs.filter(trs.col("keys").contains("Login Name")).groupBy("values").count().orderBy("count").show();
-		trs.filter("keys='Name'").groupBy("values").count().orderBy("count").show();
+			return RowFactory.create(tuple.toArray());
+		});
+		//		rowRDD.reduce(Function f->{
+		//
+		//		});
+		//		Dataset<Row> trs=tps.toDF("keys","values");
+		//		trs.groupBy("keys").count().show(20,false);
+		//		trs.filter(trs.col("keys").contains("Backend User")).groupBy("values").count().orderBy("count").show();
+		//		trs.filter(trs.col("keys").contains("Login Name")).groupBy("values").count().orderBy("count").show();
+		//		trs.filter("keys='Name'").groupBy("values").count().orderBy("count").show();
+		//		trs.groupBy("keys","values").count().orderBy("keys","count").show();
 	}
+	public static List<Tuple2<String,String>> parser(String line){
+		Pattern pattern = Pattern.compile(
+				"(([\\w\\s]+):[\\w\\.\\s]+(:[\\w\\s\\.\\,]+[-\\w\\s\\.]+)*)|([\\w\\s]+=[\\[]+[\\w\\.\\,\\s]+[\\]+])|([\\w\\s]+=[\\w\\.\\s]+)");
+		java.util.regex.Matcher m = pattern.matcher(line);
+		List<Tuple2<String,String>> list = new ArrayList<>();
+		while (m.find()) {
+			String li = m.group();
+			li = li.replace("=", ":");
 
+			String[] split = li.split(":", 2);
+
+			Tuple2<String,String> jo = new Tuple2<>(split[0],split[1]);
+			list.add(jo);
+
+		}
+		return list;
+	}
 	public static final Pattern apacheLogRegex = Pattern.compile(
 			"^([\\d.]+) (\\S+) (\\S+) \\[([\\w\\d:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) ([\\d\\-]+) \"([^\"]+)\" \"([^\"]+)\".*");
 
