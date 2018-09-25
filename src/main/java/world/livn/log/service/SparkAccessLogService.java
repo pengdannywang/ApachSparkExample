@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.examples.JavaLogQuery.Stats;
 // $example off:programmatic_schema$
 import org.apache.spark.sql.AnalysisException;
@@ -109,9 +110,9 @@ public class SparkAccessLogService {
 
 			return RowFactory.create(tuple.toArray());
 		});
-		//		rowRDD.reduce(Function f->{
-		//
-		//		});
+//		rowRDD.reduce(Function f->{
+//
+//		});
 		//		Dataset<Row> trs=tps.toDF("keys","values");
 		//		trs.groupBy("keys").count().show(20,false);
 		//		trs.filter(trs.col("keys").contains("Backend User")).groupBy("values").count().orderBy("count").show();
