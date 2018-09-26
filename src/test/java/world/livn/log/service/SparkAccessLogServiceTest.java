@@ -9,8 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.platform.runner.JUnitPlatform;
 import org.junit.runner.RunWith;
 
-import scala.Tuple2;
-
 @RunWith(JUnitPlatform.class)
 public class SparkAccessLogServiceTest {
 	// static SparkSession spark;
@@ -26,25 +24,26 @@ public class SparkAccessLogServiceTest {
 	@Test
 	public void testRunBasicDataFrameExample() {
 
-		String str = "IP: 192.155.83.114 , Host Name: gds1.livngds.com , Login Name: livn , Internal API User Host=192.155.83.114, Roles=[WEBFRONT, HAL, GDS, CMS] , Geolocation: US United States: Fremont 37.5483,-121.9886";
-
+		String str = "IP: 192.155.83.114 , Host Name: gds1.livngds.com , Login Name: livn , Internal API User Host=192.155.83.114, Roles=[WEBFRONT, HAL, GDS, CMS] , Geolocation: US United States: Fremont 37.5483,-121.9886\n";
+		str=str+"IP: 203.219.109.178 , Host Name: 203-219-109-178.tpgi.com.au , Login Name: mpark , Backend User: id=74, Name: Michael Park , Distributor: id=1, code=LIVN , Geolocation: AU Australia: Sydney -33.8591,151.2002";
 		// Pattern pattern =
 		// Pattern.compile("(/([?!Geolocation])([\\w\\s]+):[\\w\\.\\s]+[^:])|([\\w\\s]+=[\\[]*[\\w\\.\\,\\s]+[\\]*])|([\\w\\s]+=[\\w\\.\\,\\s]+)");
+		//"|([\\w]+[\\w\\s]*):([\\w\\.\\s]+:[-\\w\\s\\.\\,]*[-\\w\\s\\.]+)*)1|([\\w]+[\\w\\s]*=[\\[]+[\\w\\.\\,\\s]+[\\]+])|([\\w]+[\\w\\s]*=[\\w\\.\\s]+)"
 		Pattern pattern = Pattern.compile(
-				"(([\\w\\s]+):[\\w\\.\\s]+(:[\\w\\s\\.\\,]+[-\\w\\s\\.]+)*)|([\\w\\s]+=[\\[]+[\\w\\.\\,\\s]+[\\]+])|([\\w\\s]+=[\\w\\.\\s]+)");
+				"(([\\w]+[\\w\\s]*):([\\w\\s]+)[\\w\\s\\.\\=]*(\\:[\\w\\s]+[-0-9\\s\\.\\,]+[-0-9\\s\\.]+)*)|(([\\w]+[\\w\\s]*)=(([\\w\\s]+)([\\w\\.]+)|([\\[]*[\\w\\.\\,\\s]+[\\]*])))");
 		java.util.regex.Matcher m = pattern.matcher(str);
-		List<Tuple2<String,String>> list = new ArrayList<>();
+		List<String> list = new ArrayList<>();
 		while (m.find()) {
 			String li = m.group();
-			li = li.replace("=", ":");
 
-			String[] split = li.split(":", 2);
 
-			Tuple2<String,String> jo = new Tuple2<>(split[0],split[1]);
-			list.add(jo);
+			//String[] split = li.split(":", 2);
+
+			//Tuple2<String,String> jo = new Tuple2<>(split[0],split[1]);
+			list.add(li);
 
 		}
-		for (Tuple2<String,String> str1 : list) {
+		for (String str1 : list) {
 			System.out.println(str1);
 		}
 
